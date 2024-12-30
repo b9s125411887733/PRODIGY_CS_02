@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Encryption Tool</title>
+</head>
+<body>
+    <div class="container">
+        <h1>Image Encryption Tool</h1>
+        
+        <!-- Upload Image -->
+        <input type="file" id="upload" accept="image/*">
+        
+        <!-- Canvas to display image -->
+        <canvas id="canvas" style="display: none;"></canvas>
+        <img id="image" alt="Uploaded Image" style="max-width: 100%;" />
+
+        <br>
+        
+        <!-- Encrypt and Decrypt Buttons -->
+        <button onclick="encryptImage()">Encrypt Image</button>
+        <button onclick="decryptImage()">Decrypt Image</button>
+        
+        <!-- Display encrypted/decrypted image -->
+        <h3>Encrypted Image:</h3>
+        <canvas id="encryptedCanvas"></canvas>
+    </div>
+
+    <style>
+        body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    padding: 20px;
+    text-align: center;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+button {
+    margin: 10px;
+    padding: 10px 20px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #45a049;
+}
+
+#image {
+    margin-top: 20px;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+    </style>
+
+    <script>
+let originalImage = null;
+let canvas = document.getElementById("canvas");
+let ctx = canvas.getContext("2d");
+let encryptedCanvas = document.getElementById("encryptedCanvas");
+let encryptedCtx = encryptedCanvas.getContext("2d");
+
+document.getElementById('upload').addEventListener('change', function(e) {
+    let reader = new FileReader();
+    reader.onload = function(event) {
+        originalImage = new Image();
+        originalImage.onload = function() {
+            canvas.width = originalImage.width;
+            canvas.height = originalImage.height;
+            ctx.drawImage(originalImage, 0, 0);
+            document.getElementById('image').src = originalImage.src;
+        };
+        originalImage.src = event.target.result;
+    };
+    reader.readAsDataURL(e.target.files[0]);
+});
+
+// XOR function for pixel manipulation
+function xorPixel(pixel, key) {
+    return pixel ^ key;
+}
+
+// Function to encrypt the image
+function encryptImage() {
+    if (!originalImage) {
+        alert("Please upload an image first.");
+        return;
+    }
+
+    // Get image data from canvas
+    let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    let data = imageData.data;
+    let encryptionKey = 123; // Simple XOR key, you can modify this
+
+    // XOR each pixel's red, green, blue values
+    for (let i = 0; i < data.length; i += 4) {
+        data[i] = xorPixel(data[i], encryptionKey); // Red
+        data[i + 1] = xorPixel(data[i + 1], encryptionKey); // Green
+        data[i + 2] = xorPixel(data[i + 2], encryptionKey); // Blue
+    }
+
+    // Put the modified data back on the canvas
+    encryptedCanvas.width = canvas.width;
+    encryptedCanvas.height = canvas.height;
+    encryptedCtx.putImageData(imageData, 0, 0);
+}
+
+// Function to decrypt the image
+function decryptImage() {
+    if (!originalImage) {
+        alert("Please upload an image first.");
+        return;
+    }
+
+    // Get image data from the encrypted canvas
+    let imageData = encryptedCtx.getImageData(0, 0, encryptedCanvas.width, encryptedCanvas.height);
+    let data = imageData.data;
+    let decryptionKey = 123; // Same XOR key as encryption
+
+    // XOR each pixel's red, green, blue values to decrypt
+    for (let i = 0; i < data.length; i += 4) {
+        data[i] = xorPixel(data[i], decryptionKey); // Red
+        data[i + 1] = xorPixel(data[i + 1], decryptionKey); // Green
+        data[i + 2] = xorPixel(data[i + 2], decryptionKey); // Blue
+    }
+
+    // Put the modified data back on the canvas
+    encryptedCtx.putImageData(imageData, 0, 0);
+}
+
+    </script>
+</body>
+</html>
